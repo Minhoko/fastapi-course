@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+pydantic
 
 # Database
 SQLAlchemy
@@ -7,3 +8,5 @@ psycopg2
 
 # Environment
 python-dotenv
+
+passlib[bcrypt]
