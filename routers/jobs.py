@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from schemas.job import ShowJob, JobCreate
 from db.session import get_db
 from models.jobs import Job
+from models.users import User
+from config.auth import get_current_user
 
 router = APIRouter(tags=["Jobs"], prefix="/jobs")
 
@@ -30,8 +32,10 @@ def get_job_by_id(id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=ShowJob)
-def create_job(job: JobCreate, db: Session = Depends(get_db)):
-    new_job = Job(**job.dict(), owner_id=6)
+def create_job(
+    job: JobCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    new_job = Job(**job.dict(), owner_id=current_user.id)
     db.add(new_job)
     db.commit()
     db.refresh(new_job)
@@ -39,8 +43,13 @@ def create_job(job: JobCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}")
-def update_job_by_id(id: int, job: JobCreate, db: Session = Depends(get_db)):
-    existing_job = db.query(Job).filter(Job.id == id, Job.owner_id == 6)
+def update_job_by_id(
+    id: int,
+    job: JobCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    existing_job = db.query(Job).filter(Job.id == id, Job.owner_id == current_user.id)
 
     if existing_job.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
@@ -51,8 +60,12 @@ def update_job_by_id(id: int, job: JobCreate, db: Session = Depends(get_db)):
 
 
 @router.delete("/${id}")
-def delete_job_by_id(id: int, db: Session = Depends(get_db)):
-    existing_job = db.query(Job).filter(Job.id == id, Job.owner_id == 6)
+def delete_job_by_id(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    existing_job = db.query(Job).filter(Job.id == id, Job.owner_id == current_user.id)
 
     if existing_job.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
